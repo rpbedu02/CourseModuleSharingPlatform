@@ -1,1 +1,26 @@
-
+[
+  {
+    "name": "Replication, Cell Cycle, DNA Repair, Recombination",
+    "category": "Cell Biology",
+    "tags": [
+      "RPBedu",
+      "LearnMasterModule",
+      "CellBiology"
+    ],
+    "url": "https://rpbedu02.github.io/LearnMasterModule-CellullarPhysiology-Ch4-Replication-CellCycle-DNArepair-Recombination/",
+    "isLocal": false,
+    "id": "1745353809196"
+  },
+  {
+    "name": "Molecular Mechanisms of Genome Replication and Maintenance",
+    "category": "Cell Biology",
+    "tags": [
+      "RPBedu",
+      "CourseGeneratorAIModule",
+      "CellBiology"
+    ],
+    "url": "https://rpbedu02.github.io/CourseGeneratorAI-Module-MolecularMechanismsOfGenomeReplicationAndMaintenance/",
+    "isLocal": false,
+    "id": "1745353915231"
+  }
+]
