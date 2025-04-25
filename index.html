@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- RPBedu, Course Module Sharing Platform Web App, v2025Apr22 -->
+<!-- RPBedu, Course Module Sharing Platform Web App, v2025Apr24 -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -73,7 +73,6 @@
     }
 
     .card:hover {
-      transform: translateY(-5px);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
@@ -82,12 +81,52 @@
       border-bottom: 1px solid #f3f4f6;
     }
 
+    /* Collapsible card styles */
+    .card-collapsible .card-header {
+      cursor: pointer;
+      user-select: none;
+      padding: 1rem 1.25rem;
+      transition: background-color 0.2s;
+    }
+
+    .card-collapsible .card-header:hover {
+      background-color: #f9fafb;
+    }
+
+    .card-collapsible .card-content {
+      max-height: 1000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+    }
+
+    .card-collapsible.collapsed .card-content {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-top: none;
+    }
+
     .card-title {
       font-size: 1.125rem;
       font-weight: 600;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .card-title-with-icon {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .collapse-icon {
+      transition: transform 0.3s ease;
+    }
+
+    .collapsed .collapse-icon {
+      transform: rotate(-180deg);
     }
 
     .card-content {
@@ -228,9 +267,18 @@
       margin-top: 0.5rem;
     }
 
+    .mt-4 {
+      margin-top: 1rem;
+    }
+
     .py-12 {
       padding-top: 3rem;
       padding-bottom: 3rem;
+    }
+
+    .py-3 {
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
     }
 
     /* Text utilities */
@@ -410,6 +458,61 @@
       width: 1.25rem;
       height: 1.25rem;
     }
+
+    /* Divider */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background-color: #e5e7eb;
+      margin: 1.5rem 0;
+    }
+
+    /* Input group */
+    .input-group {
+      display: flex;
+      align-items: stretch;
+    }
+
+    .input-group .input {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      flex-grow: 1;
+    }
+
+    .input-group .button {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Module count badge */
+    .module-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #e5e7eb;
+      color: #4b5563;
+      border-radius: 9999px;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -425,17 +528,51 @@
     <div class="container">
       <h1>Course Module Sharing Platform</h1>
 
-      <!-- Import/Export Section -->
-      <div class="card mb-8">
-        <div class="card-header">
-          <h2 class="card-title">Import/Export Modules</h2>
+      <!-- Import/Export Section (Collapsible) -->
+      <div id="import-export-section" class="card card-collapsible mb-8">
+        <div class="card-header" id="import-export-header">
+          <div class="card-title-with-icon">
+            <h2 class="card-title">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Import/Export Modules
+              <span id="module-count" class="module-count">0</span>
+            </h2>
+            <svg class="icon icon-sm collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </div>
         </div>
         <div class="card-content">
+          <!-- URL Import Section -->
+          <div class="mb-4">
+            <h3 class="text-sm font-medium mb-2">Import from URL</h3>
+            <div class="input-group">
+              <input 
+                type="url" 
+                id="url-import" 
+                class="input" 
+                placeholder="Enter JSON URL" 
+                value="https://raw.githubusercontent.com/rpbedu02/CourseModuleSharingPlatform/refs/heads/main/SampleModules/rpbedu-modules-2025-04-24.json">
+              <button id="url-import-btn" class="button button-primary">
+                Import
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+              Default URL points to sample modules. You can change it to import from a different source.
+            </p>
+          </div>
+
+          <div class="divider"></div>
+
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
               <button id="export-btn" class="button button-primary button-full" disabled>
                 <svg class="icon icon-sm" style="margin-right: 0.5rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="7 10 12 15 17 10"></polyline>
                   <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
@@ -454,87 +591,106 @@
         </div>
       </div>
 
-      <!-- Upload Section -->
-      <div class="grid sm:grid-cols-2 gap-6 mb-8">
-        <!-- Local Upload Form -->
-        <div class="card">
-          <div class="card-header">
+      <!-- Upload Section (Collapsible) -->
+      <div id="upload-section" class="card card-collapsible mb-8">
+        <div class="card-header" id="upload-header">
+          <div class="card-title-with-icon">
             <h2 class="card-title">
               <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              Upload Local Module
+              Add/Link Modules
             </h2>
-          </div>
-          <div class="card-content">
-            <form id="local-upload-form" class="form">
-              <div class="form-group">
-                <label for="local-name">Module Name</label>
-                <input type="text" id="local-name" class="input" placeholder="Introduction to React">
-              </div>
-
-              <div class="form-group">
-                <label for="local-category">Category</label>
-                <input type="text" id="local-category" class="input" placeholder="Web Development">
-              </div>
-
-              <div class="form-group">
-                <label for="local-tags">Tags (comma-separated)</label>
-                <input type="text" id="local-tags" class="input" placeholder="react, javascript, frontend">
-              </div>
-
-              <div class="form-group">
-                <label for="local-file">HTML File</label>
-                <input type="file" id="local-file" class="input" accept=".html">
-                <div id="local-file-selected" class="text-sm text-green-600 mt-2" style="display: none;"></div>
-              </div>
-
-              <div id="local-error" class="text-sm text-red-500 mb-4" style="display: none;"></div>
-
-              <button type="submit" class="button button-primary button-full">Upload Module</button>
-            </form>
+            <svg class="icon icon-sm collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
           </div>
         </div>
-
-        <!-- Cloud Upload Form -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-              </svg>
-              Add Cloud-Hosted Module
-            </h2>
-          </div>
-          <div class="card-content">
-            <form id="cloud-upload-form" class="form">
-              <div class="form-group">
-                <label for="cloud-name">Module Name</label>
-                <input type="text" id="cloud-name" class="input" placeholder="Advanced CSS Techniques">
+        <div class="card-content">
+          <div class="grid sm:grid-cols-2 gap-6">
+            <!-- Local Upload Form -->
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Upload Local Module
+                </h2>
               </div>
+              <div class="card-content">
+                <form id="local-upload-form" class="form">
+                  <div class="form-group">
+                    <label for="local-name">Module Name</label>
+                    <input type="text" id="local-name" class="input" placeholder="Introduction to React">
+                  </div>
 
-              <div class="form-group">
-                <label for="cloud-category">Category</label>
-                <input type="text" id="cloud-category" class="input" placeholder="Web Design">
+                  <div class="form-group">
+                    <label for="local-category">Category</label>
+                    <input type="text" id="local-category" class="input" placeholder="Web Development">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="local-tags">Tags (comma-separated)</label>
+                    <input type="text" id="local-tags" class="input" placeholder="react, javascript, frontend">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="local-file">HTML File</label>
+                    <input type="file" id="local-file" class="input" accept=".html">
+                    <div id="local-file-selected" class="text-sm text-green-600 mt-2" style="display: none;"></div>
+                  </div>
+
+                  <div id="local-error" class="text-sm text-red-500 mb-4" style="display: none;"></div>
+
+                  <button type="submit" class="button button-primary button-full">Upload Module</button>
+                </form>
               </div>
+            </div>
 
-              <div class="form-group">
-                <label for="cloud-tags">Tags (comma-separated)</label>
-                <input type="text" id="cloud-tags" class="input" placeholder="css, design, animation">
+            <!-- Cloud Upload Form -->
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                  </svg>
+                  Add Cloud-Hosted Module
+                </h2>
               </div>
+              <div class="card-content">
+                <form id="cloud-upload-form" class="form">
+                  <div class="form-group">
+                    <label for="cloud-name">Module Name</label>
+                    <input type="text" id="cloud-name" class="input" placeholder="Advanced CSS Techniques">
+                  </div>
 
-              <div class="form-group">
-                <label for="cloud-url">HTML File URL</label>
-                <input type="url" id="cloud-url" class="input" placeholder="https://example.com/module.html">
+                  <div class="form-group">
+                    <label for="cloud-category">Category</label>
+                    <input type="text" id="cloud-category" class="input" placeholder="Web Design">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="cloud-tags">Tags (comma-separated)</label>
+                    <input type="text" id="cloud-tags" class="input" placeholder="css, design, animation">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="cloud-url">HTML File URL</label>
+                    <input type="url" id="cloud-url" class="input" placeholder="https://example.com/module.html">
+                  </div>
+
+                  <div id="cloud-error" class="text-sm text-red-500 mb-4" style="display: none;"></div>
+
+                  <button type="submit" class="button button-primary button-full">Add Module</button>
+                </form>
               </div>
-
-              <div id="cloud-error" class="text-sm text-red-500 mb-4" style="display: none;"></div>
-
-              <button type="submit" class="button button-primary button-full">Add Module</button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
@@ -582,6 +738,15 @@
     const importAlert = document.getElementById('import-alert');
     const localFileInput = document.getElementById('local-file');
     const localFileSelected = document.getElementById('local-file-selected');
+    const urlImportInput = document.getElementById('url-import');
+    const urlImportBtn = document.getElementById('url-import-btn');
+    const moduleCount = document.getElementById('module-count');
+    
+    // Collapsible sections
+    const importExportSection = document.getElementById('import-export-section');
+    const importExportHeader = document.getElementById('import-export-header');
+    const uploadSection = document.getElementById('upload-section');
+    const uploadHeader = document.getElementById('upload-header');
 
     // Initialize the application
     function init() {
@@ -600,6 +765,69 @@
       exportBtn.addEventListener('click', handleExport);
       importFileInput.addEventListener('change', handleImport);
       localFileInput.addEventListener('change', handleLocalFileChange);
+      urlImportBtn.addEventListener('click', handleUrlImport);
+      
+      // Set up collapsible sections
+      importExportHeader.addEventListener('click', () => toggleSection(importExportSection));
+      uploadHeader.addEventListener('click', () => toggleSection(uploadSection));
+      
+      // Initialize sections as collapsed if there are modules, expanded if empty
+      if (modules.length > 0) {
+        toggleSection(importExportSection);
+        toggleSection(uploadSection);
+      }
+      
+      // Update module count
+      updateModuleCount();
+    }
+    
+    // Toggle section collapse/expand
+    function toggleSection(section) {
+      section.classList.toggle('collapsed');
+    }
+    
+    // Update module count badge
+    function updateModuleCount() {
+      moduleCount.textContent = modules.length;
+    }
+
+    // Handle URL import
+    async function handleUrlImport() {
+      const url = urlImportInput.value.trim();
+      
+      if (!url) {
+        showImportAlert('Please enter a valid URL', 'error');
+        return;
+      }
+
+      // Show loading state
+      const originalBtnText = urlImportBtn.innerHTML;
+      urlImportBtn.innerHTML = '<span class="spinner"></span>Importing...';
+      urlImportBtn.disabled = true;
+      
+      try {
+        // Fetch the JSON from the URL
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const importedData = await response.json();
+        
+        // Process the imported data using the existing validation logic
+        const importedCount = processImportedData(importedData);
+        
+        // Show success message
+        showImportAlert(`Successfully imported ${importedCount} modules from URL`, 'success');
+      } catch (error) {
+        // Show error message
+        showImportAlert(`Import failed: ${error.message || 'Invalid URL or data format'}`, 'error');
+      } finally {
+        // Reset button state
+        urlImportBtn.innerHTML = originalBtnText;
+        urlImportBtn.disabled = false;
+      }
     }
 
     // Handle local file selection
@@ -746,6 +974,7 @@
       modules.push(newModule);
       saveModules();
       updateModulesDisplay();
+      updateModuleCount();
     }
 
     // Save modules to localStorage
@@ -957,13 +1186,52 @@
       URL.revokeObjectURL(url);
     }
 
-    // Handle import
+    // Process imported data
+    function processImportedData(importedData) {
+      // Validate imported data
+      if (!Array.isArray(importedData)) {
+        throw new Error('Imported data is not an array');
+      }
+      
+      // Validate each module
+      importedData.forEach((module, index) => {
+        if (!module.name || !module.category || !module.url || typeof module.isLocal !== 'boolean') {
+          throw new Error(`Module at index ${index} has invalid format`);
+        }
+        
+        // Ensure tags is an array
+        if (!Array.isArray(module.tags)) {
+          module.tags = [];
+        }
+        
+        // Ensure module has an ID
+        if (!module.id) {
+          module.id = Date.now().toString() + index;
+        }
+      });
+      
+      // Create a map of existing module IDs to avoid duplicates
+      const existingIds = new Set(modules.map(m => m.id));
+      
+      // Filter out modules that already exist by ID
+      const newModules = importedData.filter(m => !existingIds.has(m.id));
+      
+      // Add new modules
+      modules = [...modules, ...newModules];
+      saveModules();
+      updateModulesDisplay();
+      updateModuleCount();
+      
+      return newModules.length;
+    }
+
+    // Handle import from file
     function handleImport(e) {
       const file = e.target.files[0];
       if (!file) return;
       
       // Hide previous alerts
-      importAlert.style.display = 'none';
+      hideImportAlert();
       
       const reader = new FileReader();
       
@@ -972,68 +1240,49 @@
           const content = e.target.result;
           const importedData = JSON.parse(content);
           
-          // Validate imported data
-          if (!Array.isArray(importedData)) {
-            throw new Error('Imported data is not an array');
-          }
-          
-          // Validate each module
-          importedData.forEach((module, index) => {
-            if (!module.name || !module.category || !module.url || typeof module.isLocal !== 'boolean') {
-              throw new Error(`Module at index ${index} has invalid format`);
-            }
-            
-            // Ensure tags is an array
-            if (!Array.isArray(module.tags)) {
-              module.tags = [];
-            }
-            
-            // Ensure module has an ID
-            if (!module.id) {
-              module.id = Date.now().toString() + index;
-            }
-          });
-          
-          // Create a map of existing module IDs to avoid duplicates
-          const existingIds = new Set(modules.map(m => m.id));
-          
-          // Filter out modules that already exist by ID
-          const newModules = importedData.filter(m => !existingIds.has(m.id));
-          
-          // Add new modules
-          modules = [...modules, ...newModules];
-          saveModules();
-          updateModulesDisplay();
+          // Process the imported data
+          const importedCount = processImportedData(importedData);
           
           // Show success message
-          importAlert.className = 'alert alert-success';
-          importAlert.textContent = `Successfully imported ${newModules.length} modules`;
-          importAlert.style.display = 'block';
+          showImportAlert(`Successfully imported ${importedCount} modules`, 'success');
           
           // Reset file input
-          e.target.value = '';
+          importFileInput.value = '';
         } catch (error) {
           // Show error message
-          importAlert.className = 'alert alert-error';
-          importAlert.textContent = `Import failed: ${error.message || 'Invalid file format'}`;
-          importAlert.style.display = 'block';
+          showImportAlert(`Import failed: ${error.message || 'Invalid file format'}`, 'error');
           
           // Reset file input
-          e.target.value = '';
+          importFileInput.value = '';
         }
       };
       
       reader.onerror = () => {
         // Show error message
-        importAlert.className = 'alert alert-error';
-        importAlert.textContent = 'Error reading file';
-        importAlert.style.display = 'block';
+        showImportAlert('Error reading file', 'error');
         
         // Reset file input
-        e.target.value = '';
+        importFileInput.value = '';
       };
       
       reader.readAsText(file);
+    }
+
+    // Show import alert
+    function showImportAlert(message, type) {
+      importAlert.className = type === 'error' ? 'alert alert-error' : 'alert alert-success';
+      importAlert.textContent = message;
+      importAlert.style.display = 'block';
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        hideImportAlert();
+      }, 5000);
+    }
+
+    // Hide import alert
+    function hideImportAlert() {
+      importAlert.style.display = 'none';
     }
 
     // Show error message
