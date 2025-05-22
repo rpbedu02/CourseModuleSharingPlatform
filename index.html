@@ -630,6 +630,11 @@
                   </div>
 
                   <div class="form-group">
+                    <label for="local-description">Description</label>
+                    <textarea id="local-description" class="input" placeholder="Enter a detailed description for the module..." rows="3"></textarea>
+                  </div>
+
+                  <div class="form-group">
                     <label for="local-category">Category</label>
                     <input type="text" id="local-category" class="input" placeholder="Web Development">
                   </div>
@@ -681,6 +686,11 @@
                   </div>
 
                   <div class="form-group">
+                    <label for="cloud-description">Description</label>
+                    <textarea id="cloud-description" class="input" placeholder="Enter a detailed description for the module..." rows="3"></textarea>
+                  </div>
+
+                  <div class="form-group">
                     <label for="cloud-url">HTML File URL</label>
                     <input type="url" id="cloud-url" class="input" placeholder="https://example.com/module.html">
                   </div>
@@ -709,6 +719,34 @@
             <option value="">All Categories</option>
           </select>
         </div>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="favorites-filter" class="input" style="width: auto; height: auto;">
+          <label for="favorites-filter" class="text-sm font-medium text-gray-700">Show Favorites Only</label>
+        </div>
+        <div class="select-wrapper">
+          <label for="rating-filter" class="text-sm font-medium text-gray-700 sr-only">Minimum Rating</label> <!-- sr-only for accessibility if label is visually hidden -->
+          <select id="rating-filter" class="select">
+            <option value="0">All Ratings</option>
+            <option value="1">1 Star & Up</option>
+            <option value="2">2 Stars & Up</option>
+            <option value="3">3 Stars & Up</option>
+            <option value="4">4 Stars & Up</option>
+            <option value="5">5 Stars</option>
+          </select>
+        </div>
+        <div class="select-wrapper">
+          <label for="sort-by-filter" class="text-sm font-medium text-gray-700 sr-only">Sort by</label>
+          <select id="sort-by-filter" class="select">
+            <option value="dateAddedDesc">Date Added (Newest First)</option>
+            <option value="dateAddedAsc">Date Added (Oldest First)</option>
+            <option value="nameAsc">Name (A-Z)</option>
+            <option value="nameDesc">Name (Z-A)</option>
+            <option value="ratingDesc">Rating (High to Low)</option>
+            <option value="ratingAsc">Rating (Low to High)</option>
+            <option value="lastAccessedDesc">Last Accessed (Newest First)</option>
+            <option value="lastAccessedAsc">Last Accessed (Oldest First)</option>
+          </select>
+        </div>
       </div>
 
       <!-- Modules Grid -->
@@ -725,6 +763,8 @@
   <script>
     // Store modules in memory
     let modules = [];
+    let currentPage = 1;
+    let itemsPerPage = 9; // 3 rows of 3 cards
 
     // DOM Elements
     const localUploadForm = document.getElementById('local-upload-form');
@@ -733,6 +773,9 @@
     const emptyState = document.getElementById('empty-state');
     const searchInput = document.getElementById('search-input');
     const categoryFilter = document.getElementById('category-filter');
+    const favoritesFilter = document.getElementById('favorites-filter');
+    const ratingFilter = document.getElementById('rating-filter');
+    const sortByFilter = document.getElementById('sort-by-filter');
     const exportBtn = document.getElementById('export-btn');
     const importFileInput = document.getElementById('import-file');
     const importAlert = document.getElementById('import-alert');
@@ -760,8 +803,11 @@
       // Set up event listeners
       localUploadForm.addEventListener('submit', handleLocalUpload);
       cloudUploadForm.addEventListener('submit', handleCloudUpload);
-      searchInput.addEventListener('input', updateModulesDisplay);
-      categoryFilter.addEventListener('change', updateModulesDisplay);
+      searchInput.addEventListener('input', () => { currentPage = 1; updateModulesDisplay(); });
+      categoryFilter.addEventListener('change', () => { currentPage = 1; updateModulesDisplay(); });
+      favoritesFilter.addEventListener('change', () => { currentPage = 1; updateModulesDisplay(); });
+      ratingFilter.addEventListener('change', () => { currentPage = 1; updateModulesDisplay(); });
+      sortByFilter.addEventListener('change', () => { currentPage = 1; updateModulesDisplay(); });
       exportBtn.addEventListener('click', handleExport);
       importFileInput.addEventListener('change', handleImport);
       localFileInput.addEventListener('change', handleLocalFileChange);
@@ -856,11 +902,13 @@
       const nameInput = document.getElementById('local-name');
       const categoryInput = document.getElementById('local-category');
       const tagsInput = document.getElementById('local-tags');
+      const descriptionInput = document.getElementById('local-description');
       const fileInput = document.getElementById('local-file');
       
       const name = nameInput.value.trim();
       const category = categoryInput.value.trim();
       const tagsString = tagsInput.value.trim();
+      const description = descriptionInput.value.trim();
       const file = fileInput.files[0];
       
       // Validate inputs
@@ -894,6 +942,7 @@
         name,
         category,
         tags,
+        description,
         url: fileUrl,
         isLocal: true
       });
@@ -902,6 +951,7 @@
       nameInput.value = '';
       categoryInput.value = '';
       tagsInput.value = '';
+      descriptionInput.value = '';
       fileInput.value = '';
       localFileSelected.style.display = 'none';
       hideError('local-error');
@@ -914,11 +964,13 @@
       const nameInput = document.getElementById('cloud-name');
       const categoryInput = document.getElementById('cloud-category');
       const tagsInput = document.getElementById('cloud-tags');
+      const descriptionInput = document.getElementById('cloud-description'); // This ID should now be correct
       const urlInput = document.getElementById('cloud-url');
       
       const name = nameInput.value.trim();
       const category = categoryInput.value.trim();
       const tagsString = tagsInput.value.trim();
+      const description = descriptionInput.value.trim(); // Ensure this is read
       const url = urlInput.value.trim();
       
       // Validate inputs
@@ -952,6 +1004,7 @@
         name,
         category,
         tags,
+        description, // Ensure this is passed
         url,
         isLocal: false
       });
@@ -960,6 +1013,7 @@
       nameInput.value = '';
       categoryInput.value = '';
       tagsInput.value = '';
+      descriptionInput.value = ''; // Ensure this is cleared
       urlInput.value = '';
       hideError('cloud-error');
     }
@@ -968,7 +1022,12 @@
     function addModule(moduleData) {
       const newModule = {
         ...moduleData,
-        id: Date.now().toString()
+        description: moduleData.description || '',
+        id: Date.now().toString(),
+        dateAdded: new Date().toISOString(),
+        dateLastAccessed: new Date().toISOString(),
+        isFavorite: false, // Added isFavorite
+        rating: 0 // Added rating, default 0
       };
       
       modules.push(newModule);
@@ -1020,44 +1079,92 @@
       // Filter modules
       const searchTerm = searchInput.value.toLowerCase();
       const selectedCategory = categoryFilter.value;
+      const showFavoritesOnly = favoritesFilter.checked;
+      const selectedRating = parseInt(ratingFilter.value);
       
-      const filteredModules = modules.filter(module => {
+      let tempFilteredModules = modules.filter(module => {
         const matchesSearch = module.name.toLowerCase().includes(searchTerm);
         const matchesCategory = selectedCategory ? module.category === selectedCategory : true;
-        return matchesSearch && matchesCategory;
+        const matchesFavorite = showFavoritesOnly ? module.isFavorite === true : true;
+        const matchesRating = selectedRating > 0 ? module.rating >= selectedRating : true;
+        return matchesSearch && matchesCategory && matchesFavorite && matchesRating;
       });
+
+      // Sort modules
+      const sortOption = sortByFilter.value;
+      switch (sortOption) {
+        case 'nameAsc':
+          tempFilteredModules.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 'nameDesc':
+          tempFilteredModules.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        case 'ratingDesc':
+          tempFilteredModules.sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name));
+          break;
+        case 'ratingAsc':
+          tempFilteredModules.sort((a, b) => a.rating - b.rating || a.name.localeCompare(b.name));
+          break;
+        case 'dateAddedAsc':
+          tempFilteredModules.sort((a, b) => new Date(a.dateAdded) - new Date(b.dateAdded));
+          break;
+        case 'dateAddedDesc': // Default
+          tempFilteredModules.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+          break;
+        case 'lastAccessedDesc':
+          tempFilteredModules.sort((a, b) => new Date(b.dateLastAccessed) - new Date(a.dateLastAccessed));
+          break;
+        case 'lastAccessedAsc':
+          tempFilteredModules.sort((a, b) => new Date(a.dateLastAccessed) - new Date(b.dateLastAccessed));
+          break;
+        default: // dateAddedDesc
+          tempFilteredModules.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+          break;
+      }
       
+      const finalFilteredModules = tempFilteredModules;
+
+      // Pagination calculations
+      const totalPages = Math.ceil(finalFilteredModules.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const modulesForCurrentPage = finalFilteredModules.slice(startIndex, endIndex);
+
       // Clear modules container
       modulesContainer.innerHTML = '';
       
-      // Show empty state if no modules
-      if (modules.length === 0) {
+      if (modules.length === 0) { // Check original modules array for the "No modules yet" message
         emptyState.innerHTML = `
           <h2 class="text-xl font-medium text-gray-600 mb-2">No modules yet</h2>
           <p class="text-gray-500">Upload your first module using the forms above or import existing modules.</p>
         `;
         modulesContainer.appendChild(emptyState);
+        renderPaginationControls(0, 0); // Clear pagination
         return;
       }
       
-      // Show no results message if filtered modules is empty
-      if (filteredModules.length === 0) {
+      if (finalFilteredModules.length === 0) { // Check filtered list for "No matching modules"
         emptyState.innerHTML = `
           <h2 class="text-xl font-medium text-gray-600 mb-2">No matching modules</h2>
           <p class="text-gray-500">Try adjusting your search or filter criteria.</p>
         `;
         modulesContainer.appendChild(emptyState);
+        renderPaginationControls(0, 0); // Clear pagination
         return;
       }
       
-      // Hide empty state
-      emptyState.remove();
+      // Hide empty state if it was previously shown but now we have modules
+      if (emptyState.parentNode === modulesContainer) {
+          emptyState.remove();
+      }
       
-      // Render modules
-      filteredModules.forEach(module => {
+      // Render modules for the current page
+      modulesForCurrentPage.forEach(module => {
         const moduleCard = createModuleCard(module);
         modulesContainer.appendChild(moduleCard);
       });
+
+      renderPaginationControls(totalPages, finalFilteredModules.length);
     }
 
     // Create a module card element
@@ -1081,16 +1188,79 @@
       cardHeader.className = 'card-header';
       
       const cardTitle = document.createElement('div');
-      cardTitle.className = 'card-title flex justify-between items-center';
+      cardTitle.className = 'card-title flex justify-between items-center'; // Main container for title elements
       
       const titleLink = document.createElement('a');
       titleLink.href = module.url;
       titleLink.target = '_blank';
       titleLink.rel = 'noopener noreferrer';
-      titleLink.className = 'module-link';
+      titleLink.className = 'module-link'; // Takes up available space
       titleLink.textContent = module.name;
       
+      titleLink.addEventListener('click', () => {
+        const clickedModule = modules.find(m => m.id === module.id);
+        if (clickedModule) {
+          clickedModule.dateLastAccessed = new Date().toISOString();
+          saveModules();
+        }
+      });
+
+      // Container for title and favorite button, to group them and allow external icon at the very end
+      const titleAndFavoriteContainer = document.createElement('div');
+      titleAndFavoriteContainer.className = 'flex items-center flex-grow'; // Use flex-grow to push external icon to the right
+      titleAndFavoriteContainer.appendChild(titleLink);
+
+      // Favorite Toggle Button
+      const favoriteButton = document.createElement('button');
+      favoriteButton.className = 'favorite-toggle';
+      favoriteButton.title = 'Toggle Favorite';
+      favoriteButton.style.background = 'none';
+      favoriteButton.style.border = 'none';
+      favoriteButton.style.cursor = 'pointer';
+      favoriteButton.style.padding = '0.25rem';
+      favoriteButton.style.marginLeft = '0.5rem'; // Space from title
+      favoriteButton.style.color = '#6b7280'; // Default color for stroke, text-gray-500
+
+      const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      starSvg.setAttribute('class', 'icon icon-sm'); // Re-use existing icon class for size
+      starSvg.setAttribute('viewBox', '0 0 24 24');
+      starSvg.setAttribute('stroke-width', '2');
+      starSvg.setAttribute('stroke', 'currentColor'); // Inherit color from button
+      
+      const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      // Single path for star, fill will be toggled
+      starPath.setAttribute('d', 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.31 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z');
+      starSvg.appendChild(starPath);
+      favoriteButton.appendChild(starSvg);
+      
+      function updateStarAppearance() {
+        if (module.isFavorite) {
+          starSvg.setAttribute('fill', 'gold'); // Filled star
+          starSvg.setAttribute('stroke', 'gold');
+        } else {
+          starSvg.setAttribute('fill', 'none');  // Empty star
+          starSvg.setAttribute('stroke', 'currentColor');
+        }
+      }
+      updateStarAppearance(); // Set initial state
+
+      favoriteButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent card click or link navigation
+        const targetModule = modules.find(m => m.id === module.id);
+        if (targetModule) {
+          targetModule.isFavorite = !targetModule.isFavorite;
+          module.isFavorite = targetModule.isFavorite; // Sync local module var for immediate UI update
+          updateStarAppearance();
+          saveModules();
+          // updateModulesDisplay(); // Not strictly necessary if only star changes
+        }
+      });
+      
+      titleAndFavoriteContainer.appendChild(favoriteButton);
+      cardTitle.appendChild(titleAndFavoriteContainer);
+
       const externalIcon = document.createElement('span');
+      externalIcon.style.marginLeft = '0.5rem'; // Add some space if title is very short
       externalIcon.innerHTML = `
         <svg class="icon icon-sm text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -1098,8 +1268,6 @@
           <line x1="10" y1="14" x2="21" y2="3"></line>
         </svg>
       `;
-      
-      cardTitle.appendChild(titleLink);
       cardTitle.appendChild(externalIcon);
       cardHeader.appendChild(cardTitle);
       card.appendChild(cardHeader);
@@ -1147,6 +1315,80 @@
         cardContent.appendChild(tagsDiv);
       }
       
+      // Module Description
+      if (module.description && module.description.trim() !== '') {
+        const descriptionDiv = document.createElement('div');
+        descriptionDiv.className = 'module-description text-sm text-gray-600 mt-2';
+        descriptionDiv.style.whiteSpace = 'pre-wrap'; // Preserve line breaks
+        descriptionDiv.textContent = module.description;
+        cardContent.appendChild(descriptionDiv);
+      }
+
+      // Rating Stars UI
+      const ratingContainer = document.createElement('div');
+      ratingContainer.className = 'rating-stars flex items-center gap-1 mt-2'; // Added flex and gap
+      
+      for (let starValue = 1; starValue <= 5; starValue++) {
+        const starButton = document.createElement('button');
+        starButton.className = 'rating-star-button';
+        starButton.setAttribute('data-value', starValue);
+        starButton.title = `Rate ${starValue} star${starValue > 1 ? 's' : ''}`;
+        starButton.style.background = 'none';
+        starButton.style.border = 'none';
+        starButton.style.cursor = 'pointer';
+        starButton.style.padding = '0.1rem'; // Small padding
+        starButton.style.color = '#6b7280'; // Default color for empty star stroke (text-gray-500)
+
+        const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        starSvg.setAttribute('class', 'icon icon-sm'); // Re-use icon-sm for size consistency
+        starSvg.setAttribute('viewBox', '0 0 24 24');
+        starSvg.setAttribute('stroke-width', '1.5'); // Adjusted stroke-width
+        
+        const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        starPath.setAttribute('d', 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.31 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z');
+        starSvg.appendChild(starPath);
+        starButton.appendChild(starSvg);
+
+        // Set initial appearance
+        if (module.rating >= starValue) {
+          starSvg.setAttribute('fill', 'gold');
+          starSvg.setAttribute('stroke', 'gold');
+        } else {
+          starSvg.setAttribute('fill', 'none');
+          starSvg.setAttribute('stroke', 'currentColor');
+        }
+        
+        starButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const clickedRating = parseInt(starButton.getAttribute('data-value'));
+          const targetModule = modules.find(m => m.id === module.id);
+
+          if (targetModule) {
+            if (targetModule.rating === clickedRating) {
+              targetModule.rating = 0; // Click same star to unrate
+            } else {
+              targetModule.rating = clickedRating;
+            }
+            module.rating = targetModule.rating; // Sync local module var for immediate UI update
+            
+            // Update all stars in this specific rating container
+            const allStarButtons = ratingContainer.querySelectorAll('.rating-star-button svg');
+            allStarButtons.forEach((svg, index) => {
+              if (targetModule.rating >= (index + 1)) {
+                svg.setAttribute('fill', 'gold');
+                svg.setAttribute('stroke', 'gold');
+              } else {
+                svg.setAttribute('fill', 'none');
+                svg.setAttribute('stroke', 'currentColor');
+              }
+            });
+            saveModules();
+          }
+        });
+        ratingContainer.appendChild(starButton);
+      }
+      cardContent.appendChild(ratingContainer);
+      
       card.appendChild(cardContent);
       
       // Card footer
@@ -1156,8 +1398,32 @@
       const sourceType = document.createElement('div');
       sourceType.className = 'text-xs text-gray-500';
       sourceType.textContent = module.isLocal ? 'Local HTML File' : 'Cloud-Hosted Module';
-      
       cardFooter.appendChild(sourceType);
+
+      // Display Date Added
+      if (module.dateAdded) {
+        const dateAddedDiv = document.createElement('div');
+        dateAddedDiv.className = 'text-xs text-gray-500 mt-1';
+        const dateAddedSpan = document.createElement('span');
+        dateAddedSpan.title = module.dateAdded;
+        dateAddedSpan.textContent = new Date(module.dateAdded).toLocaleDateString();
+        dateAddedDiv.textContent = 'Added: ';
+        dateAddedDiv.appendChild(dateAddedSpan);
+        cardFooter.appendChild(dateAddedDiv);
+      }
+
+      // Display Date Last Accessed
+      if (module.dateLastAccessed) {
+        const dateAccessedDiv = document.createElement('div');
+        dateAccessedDiv.className = 'text-xs text-gray-500';
+        const dateAccessedSpan = document.createElement('span');
+        dateAccessedSpan.title = module.dateLastAccessed;
+        dateAccessedSpan.textContent = new Date(module.dateLastAccessed).toLocaleString();
+        dateAccessedDiv.textContent = 'Accessed: ';
+        dateAccessedDiv.appendChild(dateAccessedSpan);
+        cardFooter.appendChild(dateAccessedDiv);
+      }
+      
       card.appendChild(cardFooter);
       
       return card;
@@ -1204,10 +1470,27 @@
           module.tags = [];
         }
         
+        // Ensure description is a string, default to empty if not present
+        module.description = module.description || '';
+        
         // Ensure module has an ID
         if (!module.id) {
           module.id = Date.now().toString() + index;
         }
+
+        // Ensure dateAdded and dateLastAccessed, defaulting if not present
+        module.dateAdded = module.dateAdded || new Date().toISOString();
+        module.dateLastAccessed = module.dateLastAccessed || module.dateAdded;
+
+        // Ensure isFavorite, defaulting if not present or not boolean
+        module.isFavorite = typeof module.isFavorite === 'boolean' ? module.isFavorite : false;
+
+        // Ensure rating, defaulting and validating
+        let newRating = 0;
+        if (typeof module.rating === 'number') {
+          newRating = Math.max(0, Math.min(5, module.rating));
+        }
+        module.rating = newRating;
       });
       
       // Create a map of existing module IDs to avoid duplicates
@@ -1300,6 +1583,47 @@
 
     // Initialize the application when the DOM is loaded
     document.addEventListener('DOMContentLoaded', init);
+
+    function renderPaginationControls(totalPages, totalItems) {
+      const paginationControls = document.getElementById('pagination-controls');
+      paginationControls.innerHTML = ''; // Clear existing controls
+
+      if (totalPages <= 1) {
+        return; // No controls needed for 0 or 1 page
+      }
+
+      // Previous Button
+      const prevButton = document.createElement('button');
+      prevButton.textContent = 'Previous';
+      prevButton.className = 'button button-primary'; // Basic styling
+      prevButton.disabled = currentPage === 1;
+      prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          updateModulesDisplay();
+        }
+      });
+      paginationControls.appendChild(prevButton);
+
+      // Page X of Y Span
+      const pageInfo = document.createElement('span');
+      pageInfo.className = 'text-sm text-gray-700';
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+      paginationControls.appendChild(pageInfo);
+
+      // Next Button
+      const nextButton = document.createElement('button');
+      nextButton.textContent = 'Next';
+      nextButton.className = 'button button-primary'; // Basic styling
+      nextButton.disabled = currentPage === totalPages;
+      nextButton.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          updateModulesDisplay();
+        }
+      });
+      paginationControls.appendChild(nextButton);
+    }
   </script>
 </body>
 </html>
