@@ -22,5 +22,17 @@
     "url": "https://rpbedu02.github.io/CourseGeneratorAI-Module-MolecularMechanismsOfGenomeReplicationAndMaintenance/",
     "isLocal": false,
     "id": "1745353915231"
+  },
+  {
+    "name": "Eukaryotic Cell Structure",
+    "category": "Cell Biology",
+    "tags": [
+      "RPBedu",
+      "CellBiology",
+      "CourseGeneratorAImodule"
+    ],
+    "url": "https://rpbedu02.github.io/CellBiologyModulesRepository/CellBiologyModulesRepository/CourseGeneratorAI-Module-cell_structure_and_cell_theory_interactive-20250518.html",
+    "isLocal": false,
+    "id": "1754956374102"
   }
 ]
